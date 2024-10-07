@@ -1,8 +1,7 @@
-# # Compiler
 # CXX = g++
 
-# # Compiler flags (Windows/MSYS2-specific)
-# CXXFLAGS = -I/mingw64/include -L/mingw64/lib -lglut -lglew32 -lopengl32 -lglu32
+# # Compiler flags khusus untuk Linux (menghapus -mconsole)
+# CXXFLAGS = -I/usr/include -L/usr/lib -lGL -lGLU -lglut -lGLEW -lglfw
 
 # # Source files
 # SRCS = main.cpp
@@ -11,37 +10,39 @@
 # TARGET = main
 
 # # Default target
-# all:	$(TARGET)
+# all: $(TARGET)
+
+# # Rule untuk membangun target
+# $(TARGET):	$(SRCS)
+# 	$(CXX) -o $@ $^ $(CXXFLAGS)
+
+# # Clean target untuk menghapus file yang sudah di-compile
+# clean:
+# 	rm -f $(TARGET)
+
+##############2 bisa###############
+# # Compiler
+# CXX = g++
+
+# # Compiler flags (Windows/MSYS2-specific)
+# CXXFLAGS = -I/msys64/mingw64/include/GL -L/msys64/mingw64/lib -lopengl32 -lfreeglut -lglu32 -lglew32 -lglfw3 -lgdi32 -lwinmm -mconsole
+
+# # Source files
+# SRCS = main.cpp
+
+# # Output binary
+# TARGET = main
+
+# # Default target
+# all: $(TARGET)
 
 # # Rule to build the target
-# $(TARGET): 
-# 	$(SRCS)	$(CXX) -o $@ $^ $(CXXFLAGS)
+# $(TARGET):	$(SRCS)
+# 	$(CXX) -o $@ $^ $(CXXFLAGS)
+
 # # Clean target to remove compiled files
 # clean:
 # 	rm -f $(TARGET)
-##############2###############
-# Compiler
-CXX = g++
-
-# Compiler flags (Windows/MSYS2-specific)
-CXXFLAGS = -I/msys64/mingw64/include/GL -L/msys64/mingw64/lib -lopengl32 -lfreeglut -lglu32 -lglew32 -lglfw3 -lgdi32 -lwinmm -mconsole
-
-# Source files
-SRCS = main.cpp
-
-# Output binary
-TARGET = main
-
-# Default target
-all: $(TARGET)
-
-# Rule to build the target
-$(TARGET):	$(SRCS)
-	$(CXX) -o $@ $^ $(CXXFLAGS)
-
-# Clean target to remove compiled files
-clean:
-	rm -f $(TARGET)
 #####3########
 # CC = g++
 # CXXFLAGS = -I/msys64/mingw64/include/GL -L/msys64/mingw64/lib -lopengl32 -lfreeglut -lglu32 -lglew32 -lglfw3 -lgdi32 -lwinmm
@@ -89,3 +90,26 @@ clean:
 # .PHONY: clean
 # clean:
 # 	$(RM) $(DELOBJ) $(DEP) $(APPNAME)
+
+###########4 paling iso###########
+CXX = g++
+
+# Compiler flags (Linux-specific)
+CXXFLAGS = -I/usr/include/GL -L/usr/lib -lGL -lglut -lGLU -lGLEW -lglfw -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread
+
+# Source files
+SRCS = main.cpp
+
+# Output binary
+TARGET = main
+
+# Default target
+all: $(TARGET)
+
+# Rule to build the target
+$(TARGET): $(SRCS)
+	$(CXX) -o $@ $^ $(CXXFLAGS)
+
+# Clean target to remove compiled files
+clean:
+	rm -f $(TARGET)
