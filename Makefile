@@ -114,7 +114,7 @@
 # clean:
 # 	rm -f $(TARGET)
 
-#make file coba pada jenkins nanti hapus aja gpp#
+#####make file coba pada jenkins nanti hapus aja gpp#
 CXX = g++
 
 # Compiler flags (Linux-specific)
