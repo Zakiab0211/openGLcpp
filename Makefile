@@ -41,18 +41,11 @@ clean:
 # 	docker buildx inspect --bootstrap
 
 buildx-setup:
- @echo "🔧 Setting up Docker Buildx builder..."
- @if ! docker buildx version >/dev/null 2>&1; then \
-   echo "Docker Buildx not available. Installing..."; \
-   mkdir -p ~/.docker/cli-plugins; \
-   curl -sSL https://github.com/docker/buildx/releases/latest/download/buildx-linux-amd64 -o ~/.docker/cli-plugins/docker-buildx; \
-   chmod +x ~/.docker/cli-plugins/docker-buildx; \
-   echo "Buildx installed."; \
- fi
- docker buildx rm multiarch-builder || true
- docker buildx create --name multiarch-builder --driver docker-container --bootstrap
- docker buildx use multiarch-builder
- docker buildx inspect --bootstrap
+	@echo "🔧 Setting up Docker Buildx builder..."
+	docker buildx rm multiarch-builder || true
+	docker buildx create --name multiarch-builder --driver docker-container --bootstrap
+	docker buildx use multiarch-builder
+	docker buildx inspect --bootstrap
 
 # Multi-platform build and push using Buildx
 buildx-push: buildx-setup
