@@ -15,6 +15,12 @@ SRCS = main.cpp
 # Output binary
 TARGET = main
 
+# Platforms for multi-arch build //menambahkan untuk multi arch platform
+PLATFORMS = linux/amd64,linux/arm64
+
+# Phony targets to avoid filename conflicts
+.PHONY: all clean buildx-setup buildx-push buildx-image test
+
 # Default target
 all: $(TARGET)
 
