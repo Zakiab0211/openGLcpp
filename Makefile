@@ -167,9 +167,16 @@ buildx-setup: docker-check
 		echo "❌ Docker Buildx not available. Ensure Docker version >= 19.03"; \
 		exit 1; \
 	fi
-	docker run --privileged --rm tonistiigi/binfmt --install all
-	docker buildx rm multiarch-builder 2>/dev/null || true
-	docker buildx create --use --name multiarch-builder --driver docker-container --platform $(PLATFORMS)
+	@echo "🔧 Installing QEMU for multi-platform support..."
+	@if ! docker run --privileged --rm tonistiigi/binfmt --install all >/dev/null 2>&1; then \
+		echo "❌ Failed to install QEMU for multi-architecture support."; \
+		exit 1; \
+	fi
+	@echo "🔧 Creating Docker Buildx builder..."
+	@if ! docker buildx create --use --name multiarch-builder --driver docker-container --platform $(PLATFORMS) >/dev/null 2>&1; then \
+		echo "❌ Failed to create Buildx builder."; \
+		exit 1; \
+	fi
 	docker buildx inspect --bootstrap
 	@echo "✅ Docker Buildx setup completed"
 
