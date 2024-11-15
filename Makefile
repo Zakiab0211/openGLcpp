@@ -146,17 +146,10 @@ docker-setup:
 # Setup Docker Buildx
 buildx-setup: docker-setup
 	@echo "🔧 Setting up Docker Buildx..."
-	@# Check if Docker Buildx is available
+	@# Ensure Docker Buildx is installed and available
 	@$(DOCKER) buildx version >/dev/null 2>&1 || { \
-		echo "❌ Docker Buildx not installed. Installing Docker Buildx..."; \
-		# Attempt to install Buildx if it's missing
-		mkdir -p ~/.docker/cli-plugins && \
-		curl -sSL https://github.com/docker/buildx/releases/download/v0.8.0/buildx-v0.8.0.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx && \
-		chmod +x ~/.docker/cli-plugins/docker-buildx; \
-		$(DOCKER) buildx version >/dev/null 2>&1 || { \
-			echo "❌ Docker Buildx installation failed. Exiting."; \
-			exit 1; \
-		}; \
+		echo "❌ Docker Buildx not installed. Please install Docker Buildx."; \
+		exit 1; \
 	}
 	@# Install QEMU for multi-architecture support
 	@$(DOCKER) run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
@@ -175,14 +168,14 @@ buildx-push: buildx-setup
 		echo "❌ Not logged in to Docker registry. Please run 'docker login' first."; \
 		exit 1; \
 	fi
-	@docker buildx build \
+	docker buildx build \
 		--platform $(PLATFORMS) \
 		--builder multiarch-builder \
 		-t $(IMAGE_REG)/$(IMAGE_REPO):$(IMAGE_TAG) \
 		--progress=plain \
 		--push \
 		. || { echo '❌ Buildx build and push failed'; exit 1; }
-	@echo "✅ Successfully built and pushed images for $(PLATFORMS)"
+	@echo "✅ Successfully built and pushed images for $(PLATFORMS)"
 
 # Build multi-arch images locally
 buildx-image: buildx-setup
