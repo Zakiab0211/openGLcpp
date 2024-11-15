@@ -152,8 +152,8 @@ docker-setup:
 buildx-setup: docker-setup
 	@echo "🔧 Setting up Docker Buildx..."
 	@# Ensure Docker Buildx is installed and available
-	@$(DOCKER) buildx version || { \
-		echo "❌ Docker Buildx not installed."; \
+	@$(DOCKER) buildx version >/dev/null 2>&1 || { \
+		echo "❌ Docker Buildx not installed. Please install Docker Buildx."; \
 		exit 1; \
 	}
 	@# Install QEMU for multi-architecture support
