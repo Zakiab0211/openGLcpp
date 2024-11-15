@@ -98,6 +98,7 @@
 # 		--load \
 # 		. || { echo '❌ Buildx build failed'; exit 1; }
 # 	@echo "✅ Successfully built images for AMD64 and ARM64"# Image registry details
+# Define image configuration
 IMAGE_REG ?= docker.io
 IMAGE_REPO ?= zakiab02/glcpp
 IMAGE_TAG ?= multiarch
@@ -114,8 +115,8 @@ TARGET = main
 PLATFORMS = linux/amd64,linux/arm64
 
 # Docker configuration
-DOCKER = sudo docker
-BUILDX = sudo docker buildx
+DOCKER = docker
+BUILDX = docker buildx
 BUILDX_BUILDER = multiarch-builder
 
 # Phony targets
@@ -132,16 +133,10 @@ $(TARGET): $(SRCS)
 clean:
 	rm -f $(TARGET)
 
-# Setup Docker environment
+# Setup Docker environment (for Jenkins, assume Docker is installed and running)
 docker-setup:
 	@echo "🔧 Setting up Docker environment..."
-	@# Ensure Docker service is running
-	@sudo systemctl start docker || true
-	@# Set proper permissions for Docker socket
-	@sudo chmod 666 /var/run/docker.sock || true
-	@# Add jenkins user to docker group
-	@sudo usermod -aG docker jenkins || true
-	@# Verify Docker is working
+	@# Ensure Docker is working, skipping socket permissions as Jenkins usually has access
 	@$(DOCKER) info >/dev/null 2>&1 || { \
 		echo "❌ Docker setup failed. Please check system requirements."; \
 		exit 1; \
