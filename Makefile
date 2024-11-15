@@ -163,16 +163,19 @@ buildx-setup: docker-setup
 
 # Build and push multi-arch images
 buildx-push: buildx-setup
-	@echo "🚀 Building and pushing multi-arch images for platforms: $(PLATFORMS)"
-	@$(BUILDX) build \
+	@echo "🚀 Building and pushing multi-arch images for platforms: $(PLATFORMS)..."
+	@if ! docker login $(IMAGE_REG) >/dev/null 2>&1; then \
+		echo "❌ Not logged in to Docker registry. Please run 'docker login' first."; \
+		exit 1; \
+	fi
+	docker buildx build \
 		--platform $(PLATFORMS) \
+		--builder multiarch-builder \
 		-t $(IMAGE_REG)/$(IMAGE_REPO):$(IMAGE_TAG) \
+		--progress=plain \
 		--push \
-		. || { \
-			echo "❌ Build and push failed"; \
-			exit 1; \
-		}
-	@echo "✅ Successfully built and pushed multi-arch images"
+		. || { echo '❌ Buildx build and push failed'; exit 1; }
+	@echo "✅ Successfully built and pushed images for $(PLATFORMS)"
 
 # Build multi-arch images locally
 buildx-image: buildx-setup
