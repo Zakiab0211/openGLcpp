@@ -29,14 +29,16 @@ pipeline {
 
     environment {
         // Set the Docker credentials ID for pushing images to the registry
-        DOCKER_CRED_ID = '55f6f145-13b5-4d9c-8ea4-a0f515a2212c'  // Replace with your actual Docker credentials ID
+        DOCKER_CRED_ID = 'cb5ed91a-ee37-4f8d-9e62-cc78c6a36157'  // Replace with your actual Docker credentials ID
     }
 
     stages {
         stage('Git Checkout') {
             steps {
                 // Clone the GitHub repository without changelog or polling
-                git url: 'https://github.com/Zakiab0211/openGLcpp.git', changelog: false, poll: false
+                //git url: 'https://github.com/Zakiab0211/openGLcpp.git', changelog: false, poll: false
+                git url: 'https://github.com/Zakiab0211/openGLcpp.git', branch: 'main', changelog: false, poll: false
+
             }
         }
 
