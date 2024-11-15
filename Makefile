@@ -49,19 +49,35 @@ docker-check:
 	@echo "✅ Docker permissions are valid"
 
 # Setup Docker Buildx for multi-platform builds
+# buildx-setup: docker-check
+# 	@echo "🔧 Setting up Docker Buildx builder..."
+# 	@if ! docker buildx version >/dev/null 2>&1; then \
+# 		echo "❌ Docker Buildx not available. Ensure Docker version >= 19.03"; \
+# 		exit 1; \
+# 	fi
+# 	docker run --rm --privileged tonistiigi/binfmt --install all || true
+# 	docker buildx rm multiarch-builder || true
+# 	docker buildx create --name multiarch-builder --driver docker-container --bootstrap
+# 	docker buildx use multiarch-builder
+# 	docker buildx inspect --bootstrap
+# 	docker buildx ls
+# 	@echo "✅ Docker Buildx setup completed"
+
 buildx-setup: docker-check
 	@echo "🔧 Setting up Docker Buildx builder..."
 	@if ! docker buildx version >/dev/null 2>&1; then \
 		echo "❌ Docker Buildx not available. Ensure Docker version >= 19.03"; \
 		exit 1; \
 	fi
+	@echo "⚙️ Adjusting permissions for Docker..."
+	sudo chmod 666 /var/run/docker.sock || true
 	docker run --rm --privileged tonistiigi/binfmt --install all || true
 	docker buildx rm multiarch-builder || true
 	docker buildx create --name multiarch-builder --driver docker-container --bootstrap
 	docker buildx use multiarch-builder
 	docker buildx inspect --bootstrap
 	docker buildx ls
-	@echo "✅ Docker Buildx setup completed"
+	@echo "✅ Docker Buildx setup completed"
 
 # Multi-platform build and push using Buildx
 buildx-push: buildx-setup
