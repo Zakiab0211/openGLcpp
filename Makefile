@@ -137,11 +137,10 @@ clean:
 docker-setup:
 	@echo "🔧 Setting up Docker environment..."
 	@# Ensure Docker service is running
-	@sudo -S
 	@sudo systemctl start docker || true
-	@# Set proper permissions for Docker socket
+	@# Set proper permissions for Docker socket (ensure access without sudo)
 	@sudo chmod 666 /var/run/docker.sock || true
-	@# Add jenkins user to docker group
+	@# Add jenkins user to docker group (no sudo password prompt, depends on sudoers config)
 	@sudo usermod -aG docker jenkins || true
 	@# Verify Docker is working
 	@$(DOCKER) info >/dev/null 2>&1 || { \
