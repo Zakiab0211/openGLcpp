@@ -144,24 +144,35 @@ docker-setup:
 	}
 	@echo "✅ Docker environment setup complete"
 
+# # Setup Docker Buildx
+# buildx-setup: docker-setup
+# 	@echo "🔧 Setting up Docker Buildx..."
+# 	@# Ensure Docker Buildx is installed and available
+# 	@$(DOCKER) buildx version >/dev/null 2>&1 || { \
+# 		echo "❌ Docker Buildx not installed. Please install Docker Buildx."; \
+# 		exit 1; \
+# 	}
+# 	@# Install QEMU for multi-architecture support
+# 	@$(DOCKER) run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
+# 	@# Remove existing builder if exists
+# 	@$(BUILDX) rm $(BUILDX_BUILDER) 2>/dev/null || true
+# 	@# Create and configure new builder
+# 	@$(BUILDX) create --name $(BUILDX_BUILDER) --driver docker-container --bootstrap
+# 	@$(BUILDX) use $(BUILDX_BUILDER)
+# 	@$(BUILDX) inspect --bootstrap
+# 	@echo "✅ Docker Buildx setup complete"
+
 # Setup Docker Buildx
 buildx-setup: docker-setup
-	@echo "🔧 Setting up Docker Buildx..."
-	@# Ensure Docker Buildx is installed and available
-	@$(DOCKER) buildx version >/dev/null 2>&1 || { \
-		echo "❌ Docker Buildx not installed. Please install Docker Buildx."; \
-		exit 1; \
-	}
-	@# Install QEMU for multi-architecture support
-	@$(DOCKER) run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
-	@# Remove existing builder if exists
-	@$(BUILDX) rm $(BUILDX_BUILDER) 2>/dev/null || true
-	@# Create and configure new builder
-	@$(BUILDX) create --name $(BUILDX_BUILDER) --driver docker-container --bootstrap
-	@$(BUILDX) use $(BUILDX_BUILDER)
-	@$(BUILDX) inspect --bootstrap
-	@echo "✅ Docker Buildx setup complete"
-
+    @echo "🔧 Setting up Docker Buildx..."
+    @if ! docker buildx version >/dev/null 2>&1; then \
+        echo "❌ Docker Buildx not installed. Please install Docker Buildx."; \
+        exit 1; \
+    fi
+    docker buildx rm $(BUILDX_BUILDER) 2>/dev/null || true
+    docker buildx create --name $(BUILDX_BUILDER) --driver docker-container --use
+    docker buildx inspect --bootstrap
+    @echo "✅ Docker Buildx setup complete"
 # Build and push multi-arch images
 buildx-push: buildx-setup
 	@echo "🚀 Building and pushing multi-arch images for platforms: $(PLATFORMS)..."
