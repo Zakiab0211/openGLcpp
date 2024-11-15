@@ -98,8 +98,6 @@
 # 		--load \
 # 		. || { echo '❌ Buildx build failed'; exit 1; }
 # 	@echo "✅ Successfully built images for AMD64 and ARM64"
-
-##########percobaan ke 2##########
 # Image registry details
 IMAGE_REG ?= docker.io
 IMAGE_REPO ?= zakiab02/glcpp
