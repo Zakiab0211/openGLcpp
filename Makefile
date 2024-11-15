@@ -97,8 +97,7 @@
 # 		-t $(IMAGE_REG)/$(IMAGE_REPO):$(IMAGE_TAG) \
 # 		--load \
 # 		. || { echo '❌ Buildx build failed'; exit 1; }
-# 	@echo "✅ Successfully built images for AMD64 and ARM64"
-# Image registry details
+# 	@echo "✅ Successfully built images for AMD64 and ARM64"# Image registry details
 IMAGE_REG ?= docker.io
 IMAGE_REPO ?= zakiab02/glcpp
 IMAGE_TAG ?= multiarch
@@ -131,7 +130,9 @@ $(TARGET): $(SRCS)
 
 # Clean target
 clean:
-	rm -f $(TARGET)# Setup Docker environment
+	rm -f $(TARGET)
+
+# Setup Docker environment
 docker-setup:
 	@echo "🔧 Setting up Docker environment..."
 	@# Ensure Docker service is running
