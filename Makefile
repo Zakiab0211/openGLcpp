@@ -106,74 +106,73 @@ IMAGE_TAG ?= multiarch
 
 # Compiler settings
 CXX = g++
-CXXFLAGS = -I/usr/include/GL -L/usr/lib -lGL -lglut -lGLU -lGLEW -lglfw -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread
 
-# Source files and output
+# Detect operating system and set compiler flags accordingly
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Linux)
+    CXXFLAGS = -I/usr/include -L/usr/lib -lGL -lGLU -lglut -lGLEW
+else ifeq ($(UNAME_S),Darwin) # macOS settings
+    CXXFLAGS = -I/usr/local/include -lGL -lGLU -lglut -lGLEW
+else # Windows settings
+    CXXFLAGS = -I/mingw64/include -L/mingw64/lib -lopengl32 -lfreeglut -lglu32 -lglew32 -lglfw3 -lgdi32 -lwinmm
+endif
+
+# Source and output files
 SRCS = main.cpp
 TARGET = main
 
 # Platforms for multi-arch build
 PLATFORMS = linux/amd64,linux/arm64
 
-# Docker configuration
-DOCKER = docker
-BUILDX = docker buildx
-BUILDX_BUILDER = multiarch-builder
+# Phony targets to avoid filename conflicts
+.PHONY: all clean docker-check buildx-setup buildx-push buildx-image test
 
-# Phony targets
-.PHONY: all clean docker-setup buildx-setup buildx-push buildx-image test
-
-# Default target
+# Default target to build the application
 all: $(TARGET)
 
-# Build target
+# Build the main application
 $(TARGET): $(SRCS)
-	$(CXX) -o $@ $^ $(CXXFLAGS)
+	@echo "🔨 Building $(TARGET)..."
+	$(CXX) -o $(TARGET) $(SRCS) $(CXXFLAGS) || { echo '❌ Build failed for $(TARGET)'; exit 1; }
+	@echo "✅ Build completed for $(TARGET)"
 
-# Clean target
+# Clean up generated binaries
 clean:
+	@echo "🧹 Cleaning up..."
 	rm -f $(TARGET)
+	@echo "✅ Cleanup completed"
 
-# Setup Docker environment (for Jenkins, assume Docker is installed and running)
-docker-setup:
-	@echo "🔧 Setting up Docker environment..."
-	@# Ensure Docker is working, skipping socket permissions as Jenkins usually has access
-	@$(DOCKER) info >/dev/null 2>&1 || { \
-		echo "❌ Docker setup failed. Please check system requirements."; \
+# Check Docker permissions
+docker-check:
+	@echo "🔍 Checking Docker permissions..."
+	@if ! docker info >/dev/null 2>&1; then \
+		echo "❌ Docker is not running or you don't have sufficient permissions."; \
+		echo "👉 Suggested fixes:"; \
+		echo "   1. Add your user to the Docker group:"; \
+		echo "      sudo usermod -aG docker $$USER"; \
+		echo "   2. Adjust permissions for the Docker socket:"; \
+		echo "      sudo chmod 666 /var/run/docker.sock"; \
+		echo "   3. Start Docker service:"; \
+		echo "      sudo systemctl start docker"; \
 		exit 1; \
-	}
-	@echo "✅ Docker environment setup complete"
+	fi
+	@echo "✅ Docker permissions are valid"
 
-# # Setup Docker Buildx
-# buildx-setup: docker-setup
-# 	@echo "🔧 Setting up Docker Buildx..."
-# 	@# Ensure Docker Buildx is installed and available
-# 	@$(DOCKER) buildx version >/dev/null 2>&1 || { \
-# 		echo "❌ Docker Buildx not installed. Please install Docker Buildx."; \
-# 		exit 1; \
-# 	}
-# 	@# Install QEMU for multi-architecture support
-# 	@$(DOCKER) run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
-# 	@# Remove existing builder if exists
-# 	@$(BUILDX) rm $(BUILDX_BUILDER) 2>/dev/null || true
-# 	@# Create and configure new builder
-# 	@$(BUILDX) create --name $(BUILDX_BUILDER) --driver docker-container --bootstrap
-# 	@$(BUILDX) use $(BUILDX_BUILDER)
-# 	@$(BUILDX) inspect --bootstrap
-# 	@echo "✅ Docker Buildx setup complete"
+# Setup Docker Buildx for multi-platform builds
+buildx-setup: docker-check
+	@echo "🔧 Setting up Docker Buildx builder..."
+	@if ! docker buildx version >/dev/null 2>&1; then \
+		echo "❌ Docker Buildx not available. Ensure Docker version >= 19.03"; \
+		exit 1; \
+	fi
+	docker run --privileged --rm tonistiigi/binfmt --install all
+	docker buildx rm multiarch-builder 2>/dev/null || true
+	docker buildx create --use --name multiarch-builder --driver docker-container --platform $(PLATFORMS)
+	docker buildx inspect --bootstrap
+	@echo "✅ Docker Buildx setup completed"
 
-# Setup Docker Buildx
-buildx-setup: docker-setup
-    @echo "🔧 Setting up Docker Buildx..."
-    @if ! docker buildx version >/dev/null 2>&1; then \
-        echo "❌ Docker Buildx not installed. Please install Docker Buildx."; \
-        exit 1; \
-    fi
-    docker buildx rm $(BUILDX_BUILDER) 2>/dev/null || true
-    docker buildx create --name $(BUILDX_BUILDER) --driver docker-container --use
-    docker buildx inspect --bootstrap
-    @echo "✅ Docker Buildx setup complete"
-# Build and push multi-arch images
+# Multi-platform build and push using Buildx
 buildx-push: buildx-setup
 	@echo "🚀 Building and pushing multi-arch images for platforms: $(PLATFORMS)..."
 	@if ! docker login $(IMAGE_REG) >/dev/null 2>&1; then \
@@ -187,22 +186,23 @@ buildx-push: buildx-setup
 		--progress=plain \
 		--push \
 		. || { echo '❌ Buildx build and push failed'; exit 1; }
-	@echo "✅ Successfully built and pushed images for $(PLATFORMS)"
+	@echo "✅ Successfully built and pushed images for $(PLATFORMS)"
 
-# Build multi-arch images locally
+# Multi-arch build without pushing (for local testing)
 buildx-image: buildx-setup
-	@echo "🔨 Building multi-arch images locally for platforms: $(PLATFORMS)"
-	@$(BUILDX) build \
+	@echo "🔨 Building multi-arch images locally for platforms: $(PLATFORMS)..."
+	docker buildx build \
 		--platform $(PLATFORMS) \
+		--builder multiarch-builder \
 		-t $(IMAGE_REG)/$(IMAGE_REPO):$(IMAGE_TAG) \
+		--progress=plain \
 		--load \
-		. || { \
-			echo "❌ Local build failed"; \
-			exit 1; \
-		}
-	@echo "✅ Successfully built multi-arch images locally"
+		. || { echo '❌ Buildx build failed'; exit 1; }
+	@echo "✅ Successfully built images for $(PLATFORMS)"
 
-# Test target (customize as needed)
+# Run tests (assuming test target exists)
 test: $(TARGET)
 	@echo "🧪 Running tests..."
-	@echo "✅ Tests completed"
+	chmod +x $(TARGET)
+	./$(TARGET) || { echo '❌ Test execution failed'; exit 1; }
+	@echo "✅ All tests passed"
