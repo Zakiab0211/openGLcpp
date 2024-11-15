@@ -137,6 +137,7 @@ clean:
 docker-setup:
 	@echo "🔧 Setting up Docker environment..."
 	@# Ensure Docker service is running
+	@sudo -S
 	@sudo systemctl start docker || true
 	@# Set proper permissions for Docker socket
 	@sudo chmod 666 /var/run/docker.sock || true
