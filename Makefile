@@ -132,35 +132,39 @@ $(TARGET): $(SRCS)
 # Clean target
 clean:
 	rm -f $(TARGET)
-
 # Setup Docker environment
 docker-setup:
-	@echo "🔧 Setting up Docker environment..."
-	@# Ensure Docker service is running
-	@sudo systemctl start docker || true
-	@# Set proper permissions for Docker socket (ensure access without sudo)
-	@sudo chmod 666 /var/run/docker.sock || true
-	@# Add jenkins user to docker group (no sudo password prompt, depends on sudoers config)
-	@sudo usermod -aG docker jenkins || true
-	@# Verify Docker is working
-	@$(DOCKER) info >/dev/null 2>&1 || { \
-		echo "❌ Docker setup failed. Please check system requirements."; \
-		exit 1; \
-	}
-	@echo "✅ Docker environment setup complete"
+    @echo "🔧 Setting up Docker environment..."
+    @# Ensure Docker service is running
+    @sudo systemctl start docker || true
+    @# Set proper permissions for Docker socket
+    @sudo chmod 666 /var/run/docker.sock || true
+    @# Add jenkins user to docker group
+    @sudo usermod -aG docker jenkins || true
+    @# Verify Docker is working
+    @$(DOCKER) info >/dev/null 2>&1 || { \
+        echo "❌ Docker setup failed. Please check system requirements."; \
+        exit 1; \
+    }
+    @echo "✅ Docker environment setup complete"
 
 # Setup Docker Buildx
 buildx-setup: docker-setup
-	@echo "🔧 Setting up Docker Buildx..."
-	@# Install QEMU for multi-architecture support
-	@$(DOCKER) run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
-	@# Remove existing builder if exists
-	@$(BUILDX) rm $(BUILDX_BUILDER) 2>/dev/null || true
-	@# Create and configure new builder
-	@$(BUILDX) create --name $(BUILDX_BUILDER) --driver docker-container --bootstrap
-	@$(BUILDX) use $(BUILDX_BUILDER)
-	@$(BUILDX) inspect --bootstrap
-	@echo "✅ Docker Buildx setup complete"
+    @echo "🔧 Setting up Docker Buildx..."
+    @# Ensure Docker Buildx is installed and available
+    @$(DOCKER) buildx version || { \
+        echo "❌ Docker Buildx not installed."; \
+        exit 1; \
+    }
+    @# Install QEMU for multi-architecture support
+    @$(DOCKER) run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
+    @# Remove existing builder if exists
+    @$(BUILDX) rm $(BUILDX_BUILDER) 2>/dev/null || true
+    @# Create and configure new builder
+    @$(BUILDX) create --name $(BUILDX_BUILDER) --driver docker-container --bootstrap
+    @$(BUILDX) use $(BUILDX_BUILDER)
+    @$(BUILDX) inspect --bootstrap
+    @echo "✅ Docker Buildx setup complete"
 
 # Build and push multi-arch images
 buildx-push: buildx-setup
