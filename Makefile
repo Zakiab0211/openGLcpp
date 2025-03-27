@@ -121,7 +121,7 @@ endif
 # Source and output files
 SRCS = main.cpp
 TARGET = main
-
+#akubisa
 # Platforms for multi-arch build
 PLATFORMS = linux/amd64,linux/arm64
 
